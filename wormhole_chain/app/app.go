@@ -88,9 +88,6 @@ import (
 	"github.com/tendermint/spm/openapiconsole"
 
 	"github.com/wormhole-foundation/wormhole-chain/docs"
-	tokenbridgemodule "github.com/wormhole-foundation/wormhole-chain/x/tokenbridge"
-	tokenbridgemodulekeeper "github.com/wormhole-foundation/wormhole-chain/x/tokenbridge/keeper"
-	tokenbridgemoduletypes "github.com/wormhole-foundation/wormhole-chain/x/tokenbridge/types"
 	wormholemodule "github.com/wormhole-foundation/wormhole-chain/x/wormhole"
 	wormholeclient "github.com/wormhole-foundation/wormhole-chain/x/wormhole/client"
 	wormholemodulekeeper "github.com/wormhole-foundation/wormhole-chain/x/wormhole/keeper"
@@ -148,21 +145,19 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		wormholemodule.AppModuleBasic{},
-		tokenbridgemodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:        nil,
-		distrtypes.ModuleName:             nil,
-		minttypes.ModuleName:              {authtypes.Minter},
-		stakingtypes.BondedPoolName:       {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:               {authtypes.Burner},
-		ibctransfertypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
-		wormholemoduletypes.ModuleName:    nil,
-		tokenbridgemoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		authtypes.FeeCollectorName:     nil,
+		distrtypes.ModuleName:          nil,
+		minttypes.ModuleName:           {authtypes.Minter},
+		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:            {authtypes.Burner},
+		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		wormholemoduletypes.ModuleName: nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -221,7 +216,6 @@ type App struct {
 
 	WormholeKeeper wormholemodulekeeper.Keeper
 
-	TokenbridgeKeeper tokenbridgemodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -259,7 +253,6 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		wormholemoduletypes.StoreKey,
-		tokenbridgemoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -367,17 +360,6 @@ func New(
 
 	govRouter.AddRoute(wormholemoduletypes.RouterKey, wormholemodule.NewWormholeGovernanceProposalHandler(app.WormholeKeeper))
 
-	app.TokenbridgeKeeper = *tokenbridgemodulekeeper.NewKeeper(
-		appCodec,
-		keys[tokenbridgemoduletypes.StoreKey],
-		keys[tokenbridgemoduletypes.MemStoreKey],
-
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.WormholeKeeper,
-	)
-	tokenbridgeModule := tokenbridgemodule.NewAppModule(appCodec, app.TokenbridgeKeeper)
-
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, govRouter,
@@ -422,7 +404,6 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		wormholeModule,
-		tokenbridgeModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -449,7 +430,6 @@ func New(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		wormholemoduletypes.ModuleName,
-		tokenbridgemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -472,7 +452,6 @@ func New(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		wormholemoduletypes.ModuleName,
-		tokenbridgemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -503,7 +482,6 @@ func New(
 		upgradetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		feegrant.ModuleName,
-		tokenbridgemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -692,7 +670,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(wormholemoduletypes.ModuleName)
-	paramsKeeper.Subspace(tokenbridgemoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
