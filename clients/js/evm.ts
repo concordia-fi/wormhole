@@ -114,12 +114,12 @@ export async function query_contract_evm(
       const nb2 = new ethers.Contract(contract_address, ["function finality() public view returns (uint8)", "function evmChainId() public view returns (uint256)", "function isFork() public view returns (bool)"], provider)
       result.finality = await nb2.finality()
       try {
-        result.evmChainId = await tb2.evmChainId()
+        result.evmChainId = await nb2.evmChainId()
       } catch (e) {
         result.evmChainId = null
       }
       try {
-        result.isFork = await tb2.isFork()
+        result.isFork = await nb2.isFork()
       } catch (e) {
         result.isFork = null
       }
